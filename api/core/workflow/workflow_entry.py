@@ -45,6 +45,7 @@ class WorkflowEntry:
         call_depth: int,
         variable_pool: VariablePool,
         thread_pool_id: Optional[str] = None,
+        conversation_variables = None, #----------------------------------------######################################
     ) -> None:
         """
         Init workflow entry
@@ -82,6 +83,7 @@ class WorkflowEntry:
             max_execution_steps=dify_config.WORKFLOW_MAX_EXECUTION_STEPS,
             max_execution_time=dify_config.WORKFLOW_MAX_EXECUTION_TIME,
             thread_pool_id=thread_pool_id,
+            conversation_variables=conversation_variables, #----------------------------------------######################################
         )
 
     def run(
@@ -189,7 +191,13 @@ class WorkflowEntry:
         )
         try:
             # run node
-            generator = node_instance.run()
+            # check if node is llm node
+            #----------------------------------------######################################
+            if node_type == NodeType.LLM or node_type == NodeType.KNOWLEDGE_RETRIEVAL:
+                generator = node_instance.run(workflow.conversation_variables)
+            else:
+                generator = node_instance.run()
+            #----------------------------------------######################################
         except Exception as e:
             raise WorkflowNodeRunFailedError(node_instance=node_instance, error=str(e))
         return node_instance, generator

@@ -100,6 +100,7 @@ class GraphEngine:
         max_execution_steps: int,
         max_execution_time: int,
         thread_pool_id: Optional[str] = None,
+        conversation_variables=None
     ) -> None:
         thread_pool_max_submit_count = dify_config.MAX_SUBMIT_COUNT
         thread_pool_max_workers = 10
@@ -137,6 +138,8 @@ class GraphEngine:
 
         self.max_execution_steps = max_execution_steps
         self.max_execution_time = max_execution_time
+        self.conversation_variables = conversation_variables
+
 
     def run(self) -> Generator[GraphEngineEvent, None, None]:
         # trigger graph run start event
@@ -622,7 +625,15 @@ class GraphEngine:
             try:
                 # run node
                 retry_start_at = datetime.now(UTC).replace(tzinfo=None)
-                generator = node_instance.run()
+                # run node
+                # check if node is llm node
+                #----------------------------------------######################################
+                node_type = node_instance.node_type
+                if node_type == NodeType.LLM or node_type == NodeType.KNOWLEDGE_RETRIEVAL:
+                    generator = node_instance.run(self.conversation_variables)
+                else:
+                    generator = node_instance.run()
+                #----------------------------------------######################################
                 for item in generator:
                     if isinstance(item, GraphEngineEvent):
                         if isinstance(item, BaseIterationEvent):

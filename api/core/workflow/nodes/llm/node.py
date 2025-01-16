@@ -88,7 +88,7 @@ class LLMNode(BaseNode[LLMNodeData]):
     _node_data_cls = LLMNodeData
     _node_type = NodeType.LLM
 
-    def _run(self) -> Generator[NodeEvent | InNodeEvent, None, None]:
+    def _run(self, conversation_variables=None) -> Generator[NodeEvent | InNodeEvent, None, None]:
         node_inputs: Optional[dict[str, Any]] = None
         process_data = None
 
@@ -157,6 +157,24 @@ class LLMNode(BaseNode[LLMNodeData]):
                 variable_pool=self.graph_runtime_state.variable_pool,
                 jinja2_variables=self.node_data.prompt_config.jinja2_variables,
             )
+
+            #----------------------------------------######################################
+            # llm node
+            #----------------------------------------######################################
+            if conversation_variables is not None:
+                chat_history = [el for el in conversation_variables if el.name == "ChatHistory"][0].value
+                prompt_messages = []
+                for el in chat_history:
+                    if el["role"] == "system":
+                        prompt_messages.append(SystemPromptMessage(content=el["text"]))
+                    elif el["role"] == "user":
+                        prompt_messages.append(UserPromptMessage(content=el["text"]))
+                    elif el["role"] == "assistant":
+                        prompt_messages.append(AssistantPromptMessage(content=el["text"]))
+                    else:
+                        raise ValueError("role: ", el["role"])
+
+                print("Set Prompt Messages: ", prompt_messages)
 
             process_data = {
                 "model_mode": model_config.mode,
