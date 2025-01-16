@@ -161,8 +161,14 @@ class LLMNode(BaseNode[LLMNodeData]):
             #----------------------------------------######################################
             # llm node
             #----------------------------------------######################################
-            if conversation_variables is not None:
-                chat_history = [el for el in conversation_variables if el.name == "ChatHistory"][0].value
+            if conversation_variables is not None: # TODO: remove that whole logic with passing conversation_variables, this was before i knew about self.graph_runtime_state.variable_pool
+                chat_history = self.graph_runtime_state.variable_pool.get(["conversation", "ChatHistory"])
+                #chat_history = [el for el in conversation_variables if el.name == "ChatHistory"][0].value
+                if not chat_history:
+                    raise VariableNotFoundError("ChatHistory not found")
+
+                chat_history = chat_history.value
+
                 prompt_messages = []
                 for el in chat_history:
                     if el["role"] == "system":

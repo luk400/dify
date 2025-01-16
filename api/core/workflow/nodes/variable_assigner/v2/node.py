@@ -93,11 +93,37 @@ class VariableAssignerNode(BaseNode[VariableAssignerNodeData]):
 
                 # ==================== Execution Part
 
-                updated_value = self._handle_item(
-                    variable=variable,
-                    operation=item.operation,
-                    value=item.value,
-                )
+                #--------------------------------------######################################
+                if variable.name.strip() == "ChatHistory":
+                    role = self.graph_runtime_state.variable_pool.get(['conversation', 'NewChatEntryRole'])
+                    text = self.graph_runtime_state.variable_pool.get(['conversation', 'NewChatEntryText'])
+
+                    if role is None:
+                        raise VariableNotFoundError(variable_selector=['conversation', 'NewChatEntryRole'])
+                    elif text is None:
+                        raise VariableNotFoundError(variable_selector=['conversation', 'NewChatEntryText'])
+
+                    role = role.value
+                    text = text.value
+
+                    new_val = {
+                        "role": role,
+                        "text": text,
+                        "files": []
+                    }
+                    updated_value = self._handle_item(
+                        variable=variable,
+                        operation=item.operation,
+                        value=new_val,
+                    )
+                #--------------------------------------######################################
+                else:
+                    updated_value = self._handle_item(
+                        variable=variable,
+                        operation=item.operation,
+                        value=item.value,
+                    )
+
                 variable = variable.model_copy(update={"value": updated_value})
                 self.graph_runtime_state.variable_pool.add(variable.selector, variable)
                 updated_variable_selectors.append(variable.selector)
