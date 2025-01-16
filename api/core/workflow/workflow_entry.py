@@ -192,12 +192,7 @@ class WorkflowEntry:
         try:
             # run node
             # check if node is llm node
-            #----------------------------------------######################################
-            if node_type == NodeType.LLM or node_type == NodeType.KNOWLEDGE_RETRIEVAL:
-                generator = node_instance.run(workflow.conversation_variables)
-            else:
-                generator = node_instance.run()
-            #----------------------------------------######################################
+            generator = node_instance.run()
         except Exception as e:
             raise WorkflowNodeRunFailedError(node_instance=node_instance, error=str(e))
         return node_instance, generator
