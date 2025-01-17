@@ -161,15 +161,18 @@ class LLMNode(BaseNode[LLMNodeData]):
             #----------------------------------------######################################
             # llm node
             #----------------------------------------######################################
-            if conversation_variables is not None: # TODO: remove that whole logic with passing conversation_variables, this was before i knew about self.graph_runtime_state.variable_pool
+            # TODO: remove that whole logic with passing conversation_variables, this was before i knew about self.graph_runtime_state.variable_pool
+            if (conversation_variables is not None # TODO: remove that whole logic with passing conversation_variables, this was before i knew about self.graph_runtime_state.variable_pool
+                and self.node_data.memory is None): # only activate if memory is None, otherwise it will lead to unexpected behavior and duplicate messages
+
                 chat_history = self.graph_runtime_state.variable_pool.get(["conversation", "ChatHistory"])
-                #chat_history = [el for el in conversation_variables if el.name == "ChatHistory"][0].value
+                #chat_history = [el for el in conversation_variables if el.name == "ChatHistory"][0].value # vonersation variables not needed anymore
                 if not chat_history:
                     raise VariableNotFoundError("ChatHistory not found")
 
                 chat_history = chat_history.value
 
-                prompt_messages = []
+                prompt_messages = list(prompt_messages)
                 for el in chat_history:
                     if el["role"] == "system":
                         prompt_messages.append(SystemPromptMessage(content=el["text"]))
