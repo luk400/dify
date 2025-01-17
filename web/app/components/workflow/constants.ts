@@ -12,6 +12,7 @@ import HttpRequestDefault from './nodes/http/default'
 import ParameterExtractorDefault from './nodes/parameter-extractor/default'
 import ToolDefault from './nodes/tool/default'
 import VariableAssignerDefault from './nodes/variable-assigner/default'
+import ContextAssignerDefault from './nodes/context-assigner/default'
 import AssignerDefault from './nodes/assigner/default'
 import EndNodeDefault from './nodes/end/default'
 import IterationDefault from './nodes/iteration/default'
@@ -145,6 +146,15 @@ export const NODES_EXTRA_DATA: Record<BlockEnum, NodesExtraData> = {
     getAvailablePrevNodes: VariableAssignerDefault.getAvailablePrevNodes,
     getAvailableNextNodes: VariableAssignerDefault.getAvailableNextNodes,
     checkValid: VariableAssignerDefault.checkValid,
+  },
+  [BlockEnum.ContextAssigner]: {
+    author: 'Dify',
+    about: '',
+    availablePrevNodes: [],
+    availableNextNodes: [],
+    getAvailablePrevNodes: ContextAssignerDefault.getAvailablePrevNodes,
+    getAvailableNextNodes: ContextAssignerDefault.getAvailableNextNodes,
+    checkValid: QuestionClassifierDefault.checkValid,
   },
   [BlockEnum.Assigner]: {
     author: 'Dify',
@@ -307,6 +317,14 @@ export const NODES_INITIAL_DATA = {
     output_type: '',
     ...VariableAssignerDefault.defaultValue,
   },
+  [BlockEnum.ContextAssigner]: {
+    type: BlockEnum.ContextAssigner,
+    title: '',
+    desc: '',
+    variables: [],
+    output_type: '',
+    ...ContextAssignerDefault.defaultValue,
+  },
   [BlockEnum.VariableAggregator]: {
     type: BlockEnum.VariableAggregator,
     title: '',
@@ -386,7 +404,7 @@ export const RETRIEVAL_OUTPUT_STRUCT = `{
 
 export const SUPPORT_OUTPUT_VARS_NODE = [
   BlockEnum.Start, BlockEnum.LLM, BlockEnum.KnowledgeRetrieval, BlockEnum.Code, BlockEnum.TemplateTransform,
-  BlockEnum.HttpRequest, BlockEnum.Tool, BlockEnum.VariableAssigner, BlockEnum.VariableAggregator, BlockEnum.QuestionClassifier,
+  BlockEnum.HttpRequest, BlockEnum.Tool, BlockEnum.VariableAssigner, BlockEnum.ContextAssigner, BlockEnum.VariableAggregator, BlockEnum.QuestionClassifier,
   BlockEnum.ParameterExtractor, BlockEnum.Iteration,
   BlockEnum.DocExtractor, BlockEnum.ListFilter,
 ]

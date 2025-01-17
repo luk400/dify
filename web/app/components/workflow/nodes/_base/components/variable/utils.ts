@@ -20,6 +20,7 @@ import { BlockEnum, InputVarType, VarType } from '@/app/components/workflow/type
 import type { StartNodeType } from '@/app/components/workflow/nodes/start/types'
 import type { ConversationVariable, EnvironmentVariable, Node, NodeOutPutVar, ValueSelector, Var } from '@/app/components/workflow/types'
 import type { VariableAssignerNodeType } from '@/app/components/workflow/nodes/variable-assigner/types'
+import type { ContextAssignerNodeType } from '@/app/components/workflow/nodes/context-assigner/types'
 import {
   HTTP_REQUEST_OUTPUT_STRUCT,
   KNOWLEDGE_RETRIEVAL_OUTPUT_STRUCT,
@@ -204,6 +205,35 @@ const formatItem = (
       }
       break
     }
+
+    case BlockEnum.ContextAssigner: {
+        const {
+          output_type,
+          advanced_settings,
+        } = data as VariableAssignerNodeType
+        const isGroup = !!advanced_settings?.group_enabled
+        if (!isGroup) {
+          res.vars = [
+            {
+                variable: 'output',
+                type: output_type,
+            },
+          ]
+        }
+        else {
+          res.vars = advanced_settings?.groups.map((group) => {
+            return {
+                variable: group.group_name,
+                type: VarType.object,
+                children: [{
+                  variable: 'output',
+                  type: group.output_type,
+                }],
+            }
+          })
+        }
+        break
+            }
 
     case BlockEnum.VariableAggregator: {
       const {
@@ -740,6 +770,11 @@ export const getNodeUsedVars = (node: Node): ValueSelector[] => {
       break
     }
 
+    case BlockEnum.ContextAssigner: {
+      res = (data as ContextAssignerNodeType)?.variables
+      break
+    }
+
     case BlockEnum.VariableAggregator: {
       res = (data as VariableAssignerNodeType)?.variables
       break
@@ -819,6 +854,11 @@ export const getNodeUsedVarPassToServerKey = (node: Node, valueSelector: ValueSe
     case BlockEnum.VariableAssigner: {
       res = `#${valueSelector.join('.')}#`
       break
+    }
+
+    case BlockEnum.ContextAssigner: {
+        res = `#${valueSelector.join('.')}#`
+        break
     }
 
     case BlockEnum.VariableAggregator: {
@@ -995,6 +1035,17 @@ export const updateNodeVars = (oldNode: Node, oldVarSelector: ValueSelector, new
         }
         break
       }
+      case BlockEnum.ContextAssigner: {
+        const payload = data as ContextAssignerNodeType
+        if (payload.variables) {
+          payload.variables = payload.variables.map((v) => {
+            if (v.join('.') === oldVarSelector.join('.'))
+              v = newVarSelector
+            return v
+          })
+        }
+        break
+      }
       case BlockEnum.VariableAggregator: {
         const payload = data as VariableAssignerNodeType
         if (payload.variables) {
@@ -1109,6 +1160,11 @@ export const getNodeOutputVars = (node: Node, isChatMode: boolean): ValueSelecto
     }
 
     case BlockEnum.VariableAssigner: {
+      res.push([id, 'output'])
+      break
+    }
+
+    case BlockEnum.ContextAssigner: {
       res.push([id, 'output'])
       break
     }

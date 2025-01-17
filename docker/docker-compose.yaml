@@ -391,6 +391,16 @@ x-shared-env: &shared-api-worker-env
   TOP_K_MAX_VALUE: ${TOP_K_MAX_VALUE:-10}
 
 services:
+  ollama:
+    image: ollama/ollama:latest
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - /usr/share/ollama/.ollama:/root/.ollama
+    networks:
+      - default
+
   # API service
   api:
     image: langgenius/dify-api:0.15.1
@@ -406,9 +416,13 @@ services:
     depends_on:
       - db
       - redis
+      - ollama  # Add this line
     volumes:
       # Mount the storage directory to the container, for storing user files.
       - ./volumes/app/storage:/app/api/storage
+      - ./app_core:/app/api/core
+    ports:
+      - "5001:5001"
     networks:
       - ssrf_proxy_network
       - default
@@ -429,9 +443,11 @@ services:
     depends_on:
       - db
       - redis
+      - ollama  # Add this line
     volumes:
       # Mount the storage directory to the container, for storing user files.
       - ./volumes/app/storage:/app/api/storage
+      - ./app_core:/app/api/core
     networks:
       - ssrf_proxy_network
       - default

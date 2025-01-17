@@ -44,12 +44,14 @@ const AddBlock = ({
   const { availableNextBlocks } = useAvailableBlocks(BlockEnum.Start, false)
 
   const handleOpenChange = useCallback((open: boolean) => {
+    console.log('open', open)
     setOpen(open)
     if (!open)
       handlePaneContextmenuCancel()
   }, [handlePaneContextmenuCancel])
 
   const handleSelect = useCallback<OnSelectBlock>((type, toolDefaultValue) => {
+    console.log('type', type)
     const {
       getNodes,
     } = store.getState()
@@ -73,6 +75,7 @@ const AddBlock = ({
   }, [store, workflowStore, t])
 
   const renderTriggerElement = useCallback((open: boolean) => {
+    console.log('open', open)
     return (
       <TipPopup
         title={t('workflow.common.addBlock')}

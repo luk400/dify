@@ -24,6 +24,7 @@ import QuestionClassifyDefault from '@/app/components/workflow/nodes/question-cl
 import HTTPDefault from '@/app/components/workflow/nodes/http/default'
 import ToolDefault from '@/app/components/workflow/nodes/tool/default'
 import VariableAssigner from '@/app/components/workflow/nodes/variable-assigner/default'
+import ContextAssigner from '@/app/components/workflow/nodes/context-assigner/default'
 import Assigner from '@/app/components/workflow/nodes/assigner/default'
 import ParameterExtractorDefault from '@/app/components/workflow/nodes/parameter-extractor/default'
 import IterationDefault from '@/app/components/workflow/nodes/iteration/default'

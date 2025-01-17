@@ -71,6 +71,11 @@ export const BLOCKS: Block[] = [
   },
   {
     classification: BlockClassificationEnum.Transform,
+    type: BlockEnum.ContextAssigner,
+    title: 'Context Assigner',
+  },
+  {
+    classification: BlockClassificationEnum.Transform,
     type: BlockEnum.ParameterExtractor,
     title: 'Parameter Extractor',
   },
