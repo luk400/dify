@@ -88,7 +88,7 @@ class LLMNode(BaseNode[LLMNodeData]):
     _node_data_cls = LLMNodeData
     _node_type = NodeType.LLM
 
-    def _run(self, conversation_variables=None) -> Generator[NodeEvent | InNodeEvent, None, None]:
+    def _run(self) -> Generator[NodeEvent | InNodeEvent, None, None]:
         node_inputs: Optional[dict[str, Any]] = None
         process_data = None
 
@@ -144,46 +144,38 @@ class LLMNode(BaseNode[LLMNodeData]):
                 ):
                     query = query_variable.text
 
+
+            if self.node_data.conversation_variable:
+                conversation_var = self.graph_runtime_state.variable_pool.get(self.node_data.conversation_variable)
+                assert conversation_var is not None, "Conversation variable not found"
+                prompt_messages_dict = conversation_var.value
+                stop = model_config.stop
+                prompt_template = []
+                for el in prompt_messages_dict:
+                    if el["role"] == "system":
+                        prompt_template.append(LLMNodeChatModelMessage(text=el["text"], role=PromptMessageRole.SYSTEM, edition_type="basic"))
+                    elif el["role"] == "user":
+                        prompt_template.append(LLMNodeChatModelMessage(text=el["text"], role=PromptMessageRole.USER, edition_type="basic"))
+                    elif el["role"] == "assistant":
+                        prompt_template.append(LLMNodeChatModelMessage(text=el["text"], role=PromptMessageRole.ASSISTANT, edition_type="basic"))
+
+                query = None
+            else:
+                prompt_template=self.node_data.prompt_template
+
             prompt_messages, stop = self._fetch_prompt_messages(
                 sys_query=query,
                 sys_files=files,
                 context=context,
                 memory=memory,
                 model_config=model_config,
-                prompt_template=self.node_data.prompt_template,
+                prompt_template=prompt_template,
                 memory_config=self.node_data.memory,
                 vision_enabled=self.node_data.vision.enabled,
                 vision_detail=self.node_data.vision.configs.detail,
                 variable_pool=self.graph_runtime_state.variable_pool,
                 jinja2_variables=self.node_data.prompt_config.jinja2_variables,
             )
-
-            #----------------------------------------######################################
-            # llm node
-            #----------------------------------------######################################
-            # TODO: remove that whole logic with passing conversation_variables, this was before i knew about self.graph_runtime_state.variable_pool
-            if (conversation_variables is not None # TODO: remove that whole logic with passing conversation_variables, this was before i knew about self.graph_runtime_state.variable_pool
-                and self.node_data.memory is None): # only activate if memory is None, otherwise it will lead to unexpected behavior and duplicate messages
-
-                chat_history = self.graph_runtime_state.variable_pool.get(["conversation", "ChatHistory"])
-                #chat_history = [el for el in conversation_variables if el.name == "ChatHistory"][0].value # vonersation variables not needed anymore
-                if not chat_history:
-                    raise VariableNotFoundError("ChatHistory not found")
-
-                chat_history = chat_history.value
-
-                prompt_messages = list(prompt_messages)
-                for el in chat_history:
-                    if el["role"] == "system":
-                        prompt_messages.append(SystemPromptMessage(content=el["text"]))
-                    elif el["role"] == "user":
-                        prompt_messages.append(UserPromptMessage(content=el["text"]))
-                    elif el["role"] == "assistant":
-                        prompt_messages.append(AssistantPromptMessage(content=el["text"]))
-                    else:
-                        raise ValueError("role: ", el["role"])
-
-                print("Set Prompt Messages: ", prompt_messages)
 
             process_data = {
                 "model_mode": model_config.mode,

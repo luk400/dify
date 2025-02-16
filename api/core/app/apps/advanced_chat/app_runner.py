@@ -166,7 +166,6 @@ class AdvancedChatAppRunner(WorkflowBasedAppRunner):
             invoke_from=self.application_generate_entity.invoke_from,
             call_depth=self.application_generate_entity.call_depth,
             variable_pool=variable_pool,
-            conversation_variables=workflow.conversation_variables,
         )
 
         generator = workflow_entry.run(

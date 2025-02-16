@@ -3,13 +3,11 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { RiArrowDownSLine } from '@remixicon/react'
 import useConfig from './use-config'
-import type { ConversationManagerNodeType, OperationType, RoleType, WhichType, HowType } from './types'
+import type { ConversationManagerNodeType, OperationType, RoleType, WhichType } from './types'
 import Field from '@/app/components/workflow/nodes/_base/components/field'
 import Split from '@/app/components/workflow/nodes/_base/components/split'
 import type { NodePanelProps } from '@/app/components/workflow/types'
 import Selector from '@/app/components/workflow/nodes/_base/components/selector'
-import Tooltip from '@/app/components/base/tooltip'
-import Editor from '@/app/components/workflow/nodes/_base/components/prompt/editor'
 import Input from '@/app/components/base/input'
 import Textarea from '@/app/components/base/textarea'
 import VarReferencePicker from '@/app/components/workflow/nodes/_base/components/variable/var-reference-picker'
@@ -19,7 +17,6 @@ const operationOptions = [
   { label: 'Add', value: 'add' as OperationType },
   { label: 'Clear', value: 'clear' as OperationType },
   { label: 'Remove', value: 'remove' as OperationType },
-  { label: 'Truncate', value: 'truncate' as OperationType },
 ]
 
 const roleOptions = [
@@ -33,11 +30,6 @@ const whichOptions = [
   { label: 'Last', value: 'last' as WhichType },
 ]
 
-const addHowOptions = [
-  { label: 'Prepend', value: 'prepend' as HowType },
-  { label: 'Append', value: 'append' as HowType },
-]
-
 const Panel: FC<NodePanelProps<ConversationManagerNodeType>> = ({
   id,
   data,
@@ -48,18 +40,12 @@ const Panel: FC<NodePanelProps<ConversationManagerNodeType>> = ({
     readOnly,
     inputs,
     handleOperationChange,
-    handleTruncateLengthChange,
     handleRoleChange,
     handleTextChange,
     handleNChange,
     handleWhichChange,
-    handleHowChange,
     handleVarReferenceChange,
     filterVar,
-    availableVars,
-    availableNodesWithParent,
-    handleContextVarChange,
-    filterContextVar,
   } = useConfig(id, data)
 
   return (
@@ -71,7 +57,7 @@ const Panel: FC<NodePanelProps<ConversationManagerNodeType>> = ({
             readonly={readOnly}
             isShowNodeName
             className='grow'
-            value={inputs.conversation_variable}
+            value={inputs.conversationVariable}
             onChange={handleVarReferenceChange}
             onlyLeafNodeVar={false}
             filterVar={filterVar}
@@ -100,13 +86,8 @@ const Panel: FC<NodePanelProps<ConversationManagerNodeType>> = ({
             <Field title="N">
               <Input
                 type="number"
-                min={1}
                 value={inputs.n}
-                onChange={e => {
-                  const value = parseInt(e.target.value)
-                  if (value > 0 || e.target.value === '') 
-                    handleNChange(value)
-                }}
+                onChange={e => handleNChange(parseInt(e.target.value))}
                 disabled={readOnly}
               />
             </Field>
@@ -128,40 +109,6 @@ const Panel: FC<NodePanelProps<ConversationManagerNodeType>> = ({
           </>
         )}
 
-        {inputs.operation === 'truncate' && (
-          <Field title="Length">
-            <Input
-              type="number"
-              min={1}
-              value={inputs.truncate_length}
-              onChange={e => {
-                const value = parseInt(e.target.value)
-                if (value > 0 || e.target.value === '') 
-                  handleTruncateLengthChange(value)
-              }}
-              disabled={readOnly}
-            />
-          </Field>
-        )}
-
-        {inputs.operation === 'add' && (
-          <Field title="How">
-            <Selector
-              value={inputs.how}
-              onChange={handleHowChange}
-              options={addHowOptions}
-              trigger={
-                <div className={cn(readOnly && 'cursor-pointer', 'h-8 shrink-0 flex items-center px-2.5 bg-gray-100 border-black/5 rounded-lg')} >
-                  <div className='w-16 pl-0.5 leading-[18px] text-xs font-medium text-gray-900'>{inputs.how}</div>
-                  {!readOnly && <RiArrowDownSLine className='ml-1 w-3.5 h-3.5 text-gray-700' />}
-                </div>
-              }
-              showChecked
-              readonly={readOnly}
-            />
-          </Field>
-        )}
-
         {inputs.operation === 'add' && (
           <Field title="Role">
             <Selector
@@ -180,37 +127,14 @@ const Panel: FC<NodePanelProps<ConversationManagerNodeType>> = ({
           </Field>
         )}
 
-        {inputs.operation === 'add' && (
-          <Field title="Context">
-            <VarReferencePicker
-              nodeId={id}
-              readonly={readOnly}
-              isShowNodeName
-              value={inputs.context?.variable_selector || []}
-              onChange={handleContextVarChange}
-              filterVar={filterContextVar}
-            />
-          </Field>
-        )}
-
         {inputs.operation === 'add' && inputs.role && (
           <Field title="Text">
-            <Editor
-              title={''}
+            <Textarea
+              className="min-h-[100px]"
+              placeholder="Enter text"
               value={inputs.text}
-              onChange={e => handleTextChange(e)}
-              readOnly={readOnly}
-              isShowContext={true}
-              isChatApp={true}
-              isChatModel={true}
-              nodesOutputVars={availableVars}
-              availableNodes={availableNodesWithParent}
-              isSupportFileVar={true}
-              hasSetBlockStatus={{
-                context: !inputs.context?.enabled || inputs.context?.variable_selector?.length === 0,
-                query: false,
-                history: false
-              }}
+              onChange={e => handleTextChange(e.target.value)}
+              disabled={readOnly}
             />
           </Field>
         )}

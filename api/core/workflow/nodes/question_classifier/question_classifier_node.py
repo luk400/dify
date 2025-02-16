@@ -39,7 +39,7 @@ class QuestionClassifierNode(LLMNode):
     _node_data_cls = QuestionClassifierNodeData  # type: ignore
     _node_type = NodeType.QUESTION_CLASSIFIER
 
-    def _run(self, conversation_variables=None):
+    def _run(self):
         node_data = cast(QuestionClassifierNodeData, self.node_data)
         variable_pool = self.graph_runtime_state.variable_pool
 
@@ -79,7 +79,6 @@ class QuestionClassifierNode(LLMNode):
             memory=memory,
             max_token_limit=rest_token,
         )
-
         prompt_messages, stop = self._fetch_prompt_messages(
             prompt_template=prompt_template,
             sys_query=query,
@@ -91,10 +90,6 @@ class QuestionClassifierNode(LLMNode):
             variable_pool=variable_pool,
             jinja2_variables=[],
         )
-
-        if conversation_variables is not None and conversation_variables.get("ChatHistory", None) is not None:
-            prompt_messages = conversation_variables["ChatHistory"]
-            print("Set Prompt Messages: ", prompt_messages)
 
         result_text = ""
         usage = LLMUsage.empty_usage()

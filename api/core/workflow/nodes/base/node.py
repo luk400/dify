@@ -60,19 +60,16 @@ class BaseNode(Generic[GenericNodeData]):
         self.node_data = cast(GenericNodeData, node_data)
 
     @abstractmethod
-    def _run(self, conversation_variables=None) -> NodeRunResult | Generator[Union[NodeEvent, "InNodeEvent"], None, None]:
+    def _run(self) -> NodeRunResult | Generator[Union[NodeEvent, "InNodeEvent"], None, None]:
         """
         Run node
         :return:
         """
         raise NotImplementedError
 
-    def run(self, conversation_variables=None) -> Generator[Union[NodeEvent, "InNodeEvent"], None, None]:
+    def run(self) -> Generator[Union[NodeEvent, "InNodeEvent"], None, None]:
         try:
-            if conversation_variables is not None: #--------------------------------------######################################
-                result = self._run(conversation_variables)
-            else:
-                result = self._run()
+            result = self._run()
         except Exception as e:
             logger.exception(f"Node {self.node_id} failed to run")
             result = NodeRunResult(

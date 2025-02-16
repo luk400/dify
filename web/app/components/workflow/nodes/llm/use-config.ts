@@ -146,6 +146,18 @@ const useConfig = (id: string, payload: LLMNodeType) => {
     }
   }, [model.provider, currentProvider, currentModel, handleModelChanged])
 
+  const handleConversationVarChange = useCallback((newVar: ValueSelector | string) => {
+    const newInputs = produce(inputs, (draft) => {
+      draft.conversation_variable = newVar as ValueSelector
+      // Clear memory and prompts if conversation variable is set
+      if (newVar && (newVar as ValueSelector).length > 0) {
+        draft.memory = undefined
+        draft.prompt_template = []
+      }
+    })
+    setInputs(newInputs)
+  }, [inputs, setInputs])
+
   const handleCompletionParamsChange = useCallback((newParams: Record<string, any>) => {
     const newInputs = produce(inputs, (draft) => {
       draft.model.completion_params = newParams
@@ -411,6 +423,7 @@ const useConfig = (id: string, payload: LLMNodeType) => {
     handleStop,
     runResult,
     filterJinjia2InputVar,
+    handleConversationVarChange
   }
 }
 

@@ -154,7 +154,7 @@ export const NODES_EXTRA_DATA: Record<BlockEnum, NodesExtraData> = {
     availableNextNodes: [],
     getAvailablePrevNodes: ContextAssignerDefault.getAvailablePrevNodes,
     getAvailableNextNodes: ContextAssignerDefault.getAvailableNextNodes,
-    checkValid: QuestionClassifierDefault.checkValid,
+    checkValid: ContextAssignerDefault.checkValid,
   },
   [BlockEnum.Assigner]: {
     author: 'Dify',

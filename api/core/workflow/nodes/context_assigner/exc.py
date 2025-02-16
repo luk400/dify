@@ -3,17 +3,12 @@ from typing import Any
 
 from core.workflow.nodes.context_assigner.common.exc import VariableOperatorNodeError
 
-from .enums import InputType, Operation
+from .enums import Operation
 
 
 class OperationNotSupportedError(VariableOperatorNodeError):
     def __init__(self, *, operation: Operation, variable_type: str):
         super().__init__(f"Operation {operation} is not supported for type {variable_type}")
-
-
-class InputTypeNotSupportedError(VariableOperatorNodeError):
-    def __init__(self, *, input_type: InputType, operation: Operation):
-        super().__init__(f"Input type {input_type} is not supported for operation {operation}")
 
 
 class VariableNotFoundError(VariableOperatorNodeError):

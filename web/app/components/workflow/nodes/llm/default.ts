@@ -15,6 +15,7 @@ const nodeDefault: NodeDefault<LLMNodeType> = {
         temperature: 0.7,
       },
     },
+    conversation_variable: undefined,
     prompt_template: [{
       role: PromptRole.system,
       text: '',
@@ -42,23 +43,25 @@ const nodeDefault: NodeDefault<LLMNodeType> = {
     if (!errorMessages && !payload.model.provider)
       errorMessages = t(`${i18nPrefix}.fieldRequired`, { field: t(`${i18nPrefix}.fields.model`) })
 
-    if (!errorMessages && !payload.memory) {
+    // Skip prompt validation if conversation_variable is set
+    if (!errorMessages && !payload.conversation_variable && !payload.memory) {
       const isChatModel = payload.model.mode === 'chat'
       const isPromptEmpty = isChatModel
         ? !(payload.prompt_template as PromptItem[]).some((t) => {
           if (t.edition_type === EditionType.jinja2)
             return t.jinja2_text !== ''
-
           return t.text !== ''
         })
-        : ((payload.prompt_template as PromptItem).edition_type === EditionType.jinja2 ? (payload.prompt_template as PromptItem).jinja2_text === '' : (payload.prompt_template as PromptItem).text === '')
+        : ((payload.prompt_template as PromptItem).edition_type === EditionType.jinja2 
+          ? (payload.prompt_template as PromptItem).jinja2_text === '' 
+          : (payload.prompt_template as PromptItem).text === '')
       if (isPromptEmpty)
         errorMessages = t(`${i18nPrefix}.fieldRequired`, { field: t('workflow.nodes.llm.prompt') })
     }
 
-    if (!errorMessages && !!payload.memory) {
+    // Skip memory validation if conversation_variable is set
+    if (!errorMessages && !payload.conversation_variable && !!payload.memory) {
       const isChatModel = payload.model.mode === 'chat'
-      // payload.memory.query_prompt_template not pass is default: {{#sys.query#}}
       if (isChatModel && !!payload.memory.query_prompt_template && !payload.memory.query_prompt_template.includes('{{#sys.query#}}'))
         errorMessages = t('workflow.nodes.llm.sysQueryInUser')
     }

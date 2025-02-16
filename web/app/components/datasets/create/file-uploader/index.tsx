@@ -49,6 +49,7 @@ const FileUploader = ({
   const fileUploader = useRef<HTMLInputElement>(null)
   const hideUpload = notSupportBatchUpload && fileList.length > 0
 
+  // useSWR makes a request to the server to get the file upload configuration
   const { data: fileUploadConfigResponse } = useSWR({ url: '/files/upload' }, fetchFileUploadConfig)
   const { data: supportFileTypesResponse } = useSWR({ url: '/files/support-type' }, fetchSupportFileTypes)
   const supportTypes = supportFileTypesResponse?.allowed_extensions || []

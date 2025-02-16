@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useRef } from 'react'
 import produce from 'immer'
-import type { ConversationManagerNodeType, OperationType, RoleType, WhichType, HowType } from './types'
+import type { ConversationManagerNodeType, OperationType, RoleType, WhichType } from './types'
 import type { Var, ValueSelector } from '../../types'
 import { VarType } from '../../types'
 import useNodeCrud from '@/app/components/workflow/nodes/_base/hooks/use-node-crud'
 import { useNodesReadOnly } from '@/app/components/workflow/hooks'
 import { useStore } from '../../store'
-import useAvailableVarList from '../_base/hooks/use-available-var-list'
 
 const useConfig = (id: string, payload: ConversationManagerNodeType) => {
   const { nodesReadOnly: readOnly } = useNodesReadOnly()
@@ -20,7 +19,7 @@ const useConfig = (id: string, payload: ConversationManagerNodeType) => {
   }, [doSetInputs])
 
   useEffect(() => {
-    if (inputs.conversation_variable)
+    if (inputs.conversationVariable)
       return
 
     const isReady = defaultConfig && Object.keys(defaultConfig).length > 0
@@ -34,30 +33,17 @@ const useConfig = (id: string, payload: ConversationManagerNodeType) => {
 
   const handleConversationVariableChange = useCallback((value: string) => {
     const newInputs = produce(inputsRef.current, (draft: any) => {
-      draft.conversation_variable = value
+      draft.conversationVariable = value
     })
     setInputs(newInputs)
   }, [setInputs])
 
-
   const handleVarReferenceChange = useCallback((newVar: ValueSelector | string) => {
     const newInputs = produce(inputs, (draft) => {
-      draft.conversation_variable = newVar as ValueSelector
+      draft.conversationVariable = newVar as ValueSelector
     })
     setInputs(newInputs)
   }, [inputs, setInputs])
-
-  const filterMemoryPromptVar = useCallback((varPayload: Var) => {
-    return [VarType.arrayObject, VarType.array, VarType.number, VarType.string, VarType.secret, VarType.arrayString, VarType.arrayNumber, VarType.file, VarType.arrayFile].includes(varPayload.type)
-  }, [])
-
-  const {
-    availableVars,
-    availableNodesWithParent,
-  } = useAvailableVarList(id, {
-    onlyLeafNodeVar: false,
-    filterVar: filterMemoryPromptVar,
-  })
 
   const handleOperationChange = useCallback((value: OperationType) => {
     const newInputs = produce(inputsRef.current, (draft: any) => {
@@ -65,16 +51,6 @@ const useConfig = (id: string, payload: ConversationManagerNodeType) => {
       if (value === 'remove' && !draft.which) {
         draft.which = 'first'
       }
-      if (value === 'truncate' && !draft.truncate_length) {
-        draft.truncate_length = 1
-      }
-    })
-    setInputs(newInputs)
-  }, [setInputs])
-
-  const handleTruncateLengthChange = useCallback((value: number) => {
-    const newInputs = produce(inputsRef.current, (draft: any) => {
-      draft.truncate_length = value
     })
     setInputs(newInputs)
   }, [setInputs])
@@ -107,34 +83,8 @@ const useConfig = (id: string, payload: ConversationManagerNodeType) => {
     setInputs(newInputs)
   }, [setInputs])
 
-  const handleHowChange = useCallback((value: HowType) => {
-    const newInputs = produce(inputsRef.current, (draft: any) => {
-      draft.how = value
-    })
-    setInputs(newInputs)
-  }, [setInputs])
-
-
   const filterVar = useCallback((varPayload: Var) => {
     return [VarType.arrayObject].includes(varPayload.type)
-  }, [])
-
-  const handleContextVarChange = useCallback((newVar: ValueSelector | string) => {
-    const newInputs = produce(inputs, (draft) => {
-      if (!draft.context) {
-        draft.context = {
-          enabled: false,
-          variable_selector: []
-        }
-      }
-      draft.context.variable_selector = newVar as ValueSelector || []
-      draft.context.enabled = !!(newVar && (newVar as ValueSelector).length > 0)
-    })
-    setInputs(newInputs)
-  }, [inputs, setInputs])
-
-  const filterContextVar = useCallback((varPayload: Var) => {
-    return [VarType.arrayObject, VarType.array, VarType.string].includes(varPayload.type)
   }, [])
 
   return {
@@ -142,18 +92,12 @@ const useConfig = (id: string, payload: ConversationManagerNodeType) => {
     inputs,
     handleConversationVariableChange,
     handleOperationChange,
-    handleTruncateLengthChange,
     handleRoleChange,
     handleTextChange,
     handleNChange,
     handleWhichChange,
-    handleHowChange,
     handleVarReferenceChange,
     filterVar,
-    availableVars,
-    availableNodesWithParent,
-    handleContextVarChange,
-    filterContextVar
   }
 }
 

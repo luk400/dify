@@ -26,6 +26,8 @@ import { useProviderContext } from '@/context/provider-context'
 import cn from '@/utils/classnames'
 import { useInvalidDocumentDetailKey } from '@/service/knowledge/use-document'
 import { useInvalid } from '@/service/use-base'
+import { addMetadata } from '@/service/datasets'
+import { useWorkspacesContext } from '@/context/workspace-context'
 import { useChildSegmentListKey, useSegmentListKey } from '@/service/knowledge/use-segment'
 
 const FolderPlusIcon = ({ className }: React.SVGProps<SVGElement>) => {
@@ -263,12 +265,89 @@ const Documents: FC<IDocumentsProps> = ({ datasetId }) => {
             {!isFreePlan && <AutoDisabledDocument datasetId={datasetId} />}
             <IndexFailed datasetId={datasetId} />
             {embeddingAvailable && (
-              <Button variant='primary' onClick={routeToDocCreate} className='shrink-0'>
-                <PlusIcon className={cn('h-4 w-4 mr-2 stroke-current')} />
-                {isDataSourceNotion && t('datasetDocuments.list.addPages')}
-                {isDataSourceWeb && t('datasetDocuments.list.addUrl')}
-                {(!dataset?.data_source_type || isDataSourceFile) && t('datasetDocuments.list.addFile')}
-              </Button>
+              //#---------------------------------------------####################################
+              <>
+                <Button variant='primary' onClick={routeToDocCreate} className='shrink-0'>
+                  <PlusIcon className={cn('h-4 w-4 mr-2 stroke-current')} />
+                  {isDataSourceNotion && t('datasetDocuments.list.addPages')}
+                  {isDataSourceWeb && t('datasetDocuments.list.addUrl')}
+                  {(!dataset?.data_source_type || isDataSourceFile) && t('datasetDocuments.list.addFile')}
+                </Button>
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+                    
+                    // Check if it's a JSON file
+                    if (!file.type.includes('json') && !file.name.endsWith('.json')) {
+                      alert('Please upload a JSON file')
+                      e.target.value = '' // Reset input
+                      return
+                    }
+
+                    // Handle file upload here
+                    const reader = new FileReader()
+                    reader.onload = async (event) => {
+                      try {
+                        const jsonContent = JSON.parse(event.target?.result as string)
+                        
+                        // Validate JSON structure
+                        if (typeof jsonContent !== 'object' || jsonContent === null) {
+                          throw new Error('JSON must be an object with document names as keys')
+                        }
+                        
+                        // Send POST request to add metadata endpoint
+                        const sharedToken = globalThis.location.pathname.split('/').slice(-1)[0]
+                        const accessToken = localStorage.getItem('token') || JSON.stringify({ [sharedToken]: '' })
+                        
+                        //now do the corresponding request for the above endpoint:
+                        const response = await fetch(`http://localhost:3000/v1/datasets/${datasetId}/document/add_metadata`, {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${accessToken}`,
+                          },
+                          body: JSON.stringify({
+                            jsonContent,
+                          }),
+                        })
+                        
+                        if (!response.ok) {
+                          const errorData = await response.json()
+                          throw new Error(errorData.message || 'Failed to update metadata')
+                        }
+                        
+                        // display popup message saying that the metadata has been updated
+                        alert('Dates added successfully')
+                        
+                        // Refresh document list
+                        handleUpdate()
+                        
+                      } catch (error) {
+                        console.error('Error:', error)
+                        alert(error instanceof Error ? error.message : 'Invalid JSON format')
+                      } finally {
+                        e.target.value = '' // Reset input
+                      }
+                    }
+                    reader.readAsText(file)
+                  }}
+                  style={{ display: 'none' }}
+                  id="json-file-input"
+                />
+                <Button variant='primary' onClick={() => {
+                    document.getElementById('json-file-input')?.click()
+                  }}  className='shrink-0'>
+                  <PlusIcon className={cn('h-4 w-4 mr-2 stroke-current')} 
+                  //#---------------------------------------------####################################
+                  />
+                  {isDataSourceNotion && t('datasetDocuments.list.addPages')}
+                  {isDataSourceWeb && t('datasetDocuments.list.addUrl')}
+                  {(!dataset?.data_source_type || isDataSourceFile) && 'Add time metadata'}
+                </Button>
+              </>
             )}
           </div>
         </div>

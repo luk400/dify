@@ -62,6 +62,7 @@ class LLMNodeData(BaseNodeData):
     model: ModelConfig
     prompt_template: Sequence[LLMNodeChatModelMessage] | LLMNodeCompletionModelPromptTemplate
     prompt_config: PromptConfig = Field(default_factory=PromptConfig)
+    conversation_variable: list[str] | str = ""
     memory: Optional[MemoryConfig] = None
     context: ContextConfig
     vision: VisionConfig = Field(default_factory=VisionConfig)

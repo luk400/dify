@@ -120,6 +120,20 @@ class RetrievalService:
                 top_n=top_k,
             )
 
+        #------------------------------------------##########################
+        # add date to metadata
+        doc = DatasetDocument.query.filter_by(dataset_id=dataset_id).first()
+        has_date = doc.doc_metadata.get("date") is not None
+
+        if has_date:
+            doc_ids = [d.metadata["doc_id"] for d in all_documents]
+            docs_dataset = DatasetDocument.query.filter(DatasetDocument.id.in_(doc_ids)).all()
+            id_date_dict = {doc.id: doc.doc_metadata["date"] for doc in docs_dataset}
+            for doc in all_documents:
+                doc.metadata["date"] = id_date_dict[doc.metadata["doc_id"]]
+        #------------------------------------------##########################
+
+
         return all_documents
 
     @classmethod

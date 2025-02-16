@@ -2,6 +2,7 @@ import type { CommonNodeType, Memory, ModelConfig, PromptItem, ValueSelector, Va
 
 export type LLMNodeType = CommonNodeType & {
   model: ModelConfig
+  conversation_variable?: ValueSelector
   prompt_template: PromptItem[] | PromptItem
   prompt_config?: {
     jinja2_variables?: Variable[]

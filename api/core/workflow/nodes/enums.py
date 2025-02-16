@@ -15,12 +15,12 @@ class NodeType(StrEnum):
     TOOL = "tool"
     VARIABLE_AGGREGATOR = "variable-aggregator"
     LEGACY_VARIABLE_AGGREGATOR = "variable-assigner"  # TODO: Merge this into VARIABLE_AGGREGATOR in the database.
-    CONTEXT_ASSIGNER = "context-assigner"
     LOOP = "loop"
     ITERATION = "iteration"
     ITERATION_START = "iteration-start"  # Fake start node for iteration.
     PARAMETER_EXTRACTOR = "parameter-extractor"
     VARIABLE_ASSIGNER = "assigner"
+    CONTEXT_ASSIGNER = "context-assigner"
     DOCUMENT_EXTRACTOR = "document-extractor"
     LIST_OPERATOR = "list-operator"
 

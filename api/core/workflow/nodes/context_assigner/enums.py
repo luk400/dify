@@ -1,18 +1,21 @@
 from enum import StrEnum
 
-
 class Operation(StrEnum):
-    OVER_WRITE = "over-write"
-    CLEAR = "clear"
+    ADD = "add"
+    CLEAR = "clear" 
+    REMOVE = "remove"
+    TRUNCATE = "truncate"
+
+
+class WhichEnd(StrEnum):
+    FIRST = "first"
+    LAST = "last"
+
+class Role(StrEnum):
+    SYSTEM = "system"
+    ASSISTANT = "assistant"
+    USER = "user"
+
+class AddHow(StrEnum):
     APPEND = "append"
-    EXTEND = "extend"
-    SET = "set"
-    ADD = "+="
-    SUBTRACT = "-="
-    MULTIPLY = "*="
-    DIVIDE = "/="
-
-
-class InputType(StrEnum):
-    VARIABLE = "variable"
-    CONSTANT = "constant"
+    PREPEND = "prepend"

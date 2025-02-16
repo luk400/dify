@@ -41,6 +41,7 @@ const Panel: FC<NodePanelProps<LLMNodeType>> = ({
     hasSetBlockStatus,
     handleCompletionParamsChange,
     handleContextVarChange,
+    handleConversationVarChange,
     filterInputVar,
     filterVar,
     availableVars,
@@ -76,6 +77,7 @@ const Panel: FC<NodePanelProps<LLMNodeType>> = ({
   } = useRetryDetailShowInSingleRun()
 
   const model = inputs.model
+  const hasConversationVar = inputs.conversation_variable && inputs.conversation_variable.length > 0
 
   const singleRunForms = (() => {
     const forms: FormProps[] = []
@@ -149,117 +151,139 @@ const Panel: FC<NodePanelProps<LLMNodeType>> = ({
           />
         </Field>
 
-        {/* knowledge */}
+        {/* Conversation Variable */}
         <Field
-          title={t(`${i18nPrefix}.context`)}
-          tooltip={t(`${i18nPrefix}.contextTooltip`)!}
+          title={"Conversation Variable"}
+          tooltip={"Specify a conversation variable to be used as chat history."}
         >
-          <>
-            <VarReferencePicker
-              readonly={readOnly}
-              nodeId={id}
-              isShowNodeName
-              value={inputs.context?.variable_selector || []}
-              onChange={handleContextVarChange}
-              filterVar={filterVar}
-            />
-            {shouldShowContextTip && (
-              <div className='leading-[18px] text-xs font-normal text-[#DC6803]'>{t(`${i18nPrefix}.notSetContextInPromptTip`)}</div>
-            )}
-          </>
+          <VarReferencePicker
+            readonly={readOnly}
+            nodeId={id}
+            isShowNodeName
+            value={inputs.conversation_variable || []}
+            onChange={handleConversationVarChange}
+            onlyLeafNodeVar={false}
+            filterVar={filterVar}
+            isSupportFileVar={false}
+          />
         </Field>
 
-        {/* Prompt */}
-        {model.name && (
-          <ConfigPrompt
-            readOnly={readOnly}
-            nodeId={id}
-            filterVar={filterInputVar}
-            isChatModel={isChatModel}
-            isChatApp={isChatMode}
-            isShowContext
-            payload={inputs.prompt_template}
-            onChange={handlePromptChange}
-            hasSetBlockStatus={hasSetBlockStatus}
-            varList={inputs.prompt_config?.jinja2_variables || []}
-            handleAddVariable={handleAddVariable}
-            modelConfig={model}
-          />
-        )}
-
-        {isShowVars && (
+        {/* knowledge */}
+        {!hasConversationVar && (
           <Field
-            title={t('workflow.nodes.templateTransform.inputVars')}
-            operations={
-              !readOnly ? <AddButton2 onClick={handleAddEmptyVariable} /> : undefined
-            }
+            title={t(`${i18nPrefix}.context`)}
+            tooltip={t(`${i18nPrefix}.contextTooltip`)!}
           >
-            <VarList
-              nodeId={id}
-              readonly={readOnly}
-              list={inputs.prompt_config?.jinja2_variables || []}
-              onChange={handleVarListChange}
-              onVarNameChange={handleVarNameChange}
-              filterVar={filterJinjia2InputVar}
-              isSupportFileVar={false}
-            />
+            <>
+              <VarReferencePicker
+                readonly={readOnly}
+                nodeId={id}
+                isShowNodeName
+                value={inputs.context?.variable_selector || []}
+                onChange={handleContextVarChange}
+                filterVar={filterVar}
+              />
+              {shouldShowContextTip && !hasConversationVar && (
+                <div className='leading-[18px] text-xs font-normal text-[#DC6803]'>{t(`${i18nPrefix}.notSetContextInPromptTip`)}</div>
+              )}
+            </>
           </Field>
         )}
 
-        {/* Memory put place examples. */}
-        {isChatMode && isChatModel && !!inputs.memory && (
-          <div className='mt-4'>
-            <div className='flex justify-between items-center h-8 pl-3 pr-2 rounded-lg bg-gray-100'>
-              <div className='flex items-center space-x-1'>
-                <div className='text-xs font-semibold text-gray-700 uppercase'>{t('workflow.nodes.common.memories.title')}</div>
-                <Tooltip
-                  popupContent={t('workflow.nodes.common.memories.tip')}
-                  triggerClassName='w-4 h-4'
-                />
-              </div>
-              <div className='flex items-center h-[18px] px-1 rounded-[5px] border border-black/8 text-xs font-semibold text-gray-500 uppercase'>{t('workflow.nodes.common.memories.builtIn')}</div>
-            </div>
-            {/* Readonly User Query */}
-            <div className='mt-4'>
-              <Editor
-                title={<div className='flex items-center space-x-1'>
-                  <div className='text-xs font-semibold text-gray-700 uppercase'>user</div>
-                  <Tooltip
-                    popupContent={
-                      <div className='max-w-[180px]'>{t('workflow.nodes.llm.roleDescription.user')}</div>
-                    }
-                    triggerClassName='w-4 h-4'
-                  />
-                </div>}
-                value={inputs.memory.query_prompt_template || '{{#sys.query#}}'}
-                onChange={handleSyeQueryChange}
-                readOnly={readOnly}
-                isShowContext={false}
-                isChatApp
-                isChatModel
-                hasSetBlockStatus={hasSetBlockStatus}
-                nodesOutputVars={availableVars}
-                availableNodes={availableNodesWithParent}
-                isSupportFileVar
-              />
-
-              {inputs.memory.query_prompt_template && !inputs.memory.query_prompt_template.includes('{{#sys.query#}}') && (
-                <div className='leading-[18px] text-xs font-normal text-[#DC6803]'>{t(`${i18nPrefix}.sysQueryInUser`)}</div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Memory */}
-        {isChatMode && (
+        {/* Only show Prompt and Memory if no conversation variable is set */}
+        {!hasConversationVar && (
           <>
-            <Split />
-            <MemoryConfig
-              readonly={readOnly}
-              config={{ data: inputs.memory }}
-              onChange={handleMemoryChange}
-              canSetRoleName={isCompletionModel}
-            />
+            {/* Prompt */}
+            {model.name && (
+              <ConfigPrompt
+                readOnly={readOnly}
+                nodeId={id}
+                filterVar={filterInputVar}
+                isChatModel={isChatModel}
+                isChatApp={isChatMode}
+                isShowContext
+                payload={inputs.prompt_template}
+                onChange={handlePromptChange}
+                hasSetBlockStatus={hasSetBlockStatus}
+                varList={inputs.prompt_config?.jinja2_variables || []}
+                handleAddVariable={handleAddVariable}
+                modelConfig={model}
+              />
+            )}
+
+            {isShowVars && (
+              <Field
+                title={t('workflow.nodes.templateTransform.inputVars')}
+                operations={
+                  !readOnly ? <AddButton2 onClick={handleAddEmptyVariable} /> : undefined
+                }
+              >
+                <VarList
+                  nodeId={id}
+                  readonly={readOnly}
+                  list={inputs.prompt_config?.jinja2_variables || []}
+                  onChange={handleVarListChange}
+                  onVarNameChange={handleVarNameChange}
+                  filterVar={filterJinjia2InputVar}
+                  isSupportFileVar={false}
+                />
+              </Field>
+            )}
+
+            {/* Memory */}
+            {isChatMode && (
+              <>
+                {isChatModel && !!inputs.memory && (
+                  <div className='mt-4'>
+                    <div className='flex justify-between items-center h-8 pl-3 pr-2 rounded-lg bg-gray-100'>
+                      <div className='flex items-center space-x-1'>
+                        <div className='text-xs font-semibold text-gray-700 uppercase'>{t('workflow.nodes.common.memories.title')}</div>
+                        <Tooltip
+                          popupContent={t('workflow.nodes.common.memories.tip')}
+                          triggerClassName='w-4 h-4'
+                        />
+                      </div>
+                      <div className='flex items-center h-[18px] px-1 rounded-[5px] border border-black/8 text-xs font-semibold text-gray-500 uppercase'>{t('workflow.nodes.common.memories.builtIn')}</div>
+                    </div>
+                    {/* Readonly User Query */}
+                    <div className='mt-4'>
+                      <Editor
+                        title={<div className='flex items-center space-x-1'>
+                          <div className='text-xs font-semibold text-gray-700 uppercase'>user</div>
+                          <Tooltip
+                            popupContent={
+                              <div className='max-w-[180px]'>{t('workflow.nodes.llm.roleDescription.user')}</div>
+                            }
+                            triggerClassName='w-4 h-4'
+                          />
+                        </div>}
+                        value={inputs.memory.query_prompt_template || '{{#sys.query#}}'}
+                        onChange={handleSyeQueryChange}
+                        readOnly={readOnly}
+                        isShowContext={false}
+                        isChatApp
+                        isChatModel
+                        hasSetBlockStatus={hasSetBlockStatus}
+                        nodesOutputVars={availableVars}
+                        availableNodes={availableNodesWithParent}
+                        isSupportFileVar
+                      />
+
+                      {inputs.memory.query_prompt_template && !inputs.memory.query_prompt_template.includes('{{#sys.query#}}') && (
+                        <div className='leading-[18px] text-xs font-normal text-[#DC6803]'>{t(`${i18nPrefix}.sysQueryInUser`)}</div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                <Split />
+                <MemoryConfig
+                  readonly={readOnly}
+                  config={{ data: inputs.memory }}
+                  onChange={handleMemoryChange}
+                  canSetRoleName={isCompletionModel}
+                />
+              </>
+            )}
           </>
         )}
 
