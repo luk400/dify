@@ -15,6 +15,7 @@ from extensions.ext_database import db
 from models.dataset import ChildChunk, Dataset, DocumentSegment
 from models.dataset import Document as DatasetDocument
 from services.external_knowledge_service import ExternalDatasetService
+from datetime import datetime
 
 default_retrieval_model = {
     "search_method": RetrievalMethod.SEMANTIC_SEARCH.value,
@@ -46,6 +47,16 @@ class RetrievalService:
 
         if not dataset or dataset.available_document_count == 0 or dataset.available_segment_count == 0:
             return []
+
+        #------------------------------------------##########################
+        doc = DatasetDocument.query.filter_by(dataset_id=dataset_id).first()
+        has_date = doc.doc_metadata.get("date") is not None
+        if has_date:
+            top_k_old = top_k
+            top_k_new = 100 
+        else:
+            top_k_old = top_k_new = top_k
+
         all_documents: list[Document] = []
         threads: list[threading.Thread] = []
         exceptions: list[str] = []
@@ -57,7 +68,7 @@ class RetrievalService:
                     "flask_app": current_app._get_current_object(),  # type: ignore
                     "dataset_id": dataset_id,
                     "query": query,
-                    "top_k": top_k,
+                    "top_k": top_k_new,
                     "all_documents": all_documents,
                     "exceptions": exceptions,
                 },
@@ -72,7 +83,7 @@ class RetrievalService:
                     "flask_app": current_app._get_current_object(),  # type: ignore
                     "dataset_id": dataset_id,
                     "query": query,
-                    "top_k": top_k,
+                    "top_k": top_k_new,
                     "score_threshold": score_threshold,
                     "reranking_model": reranking_model,
                     "all_documents": all_documents,
@@ -93,7 +104,7 @@ class RetrievalService:
                     "query": query,
                     "retrieval_method": retrieval_method,
                     "score_threshold": score_threshold,
-                    "top_k": top_k,
+                    "top_k": top_k_new,
                     "reranking_model": reranking_model,
                     "all_documents": all_documents,
                     "exceptions": exceptions,
@@ -117,13 +128,8 @@ class RetrievalService:
                 query=query,
                 documents=all_documents,
                 score_threshold=score_threshold,
-                top_n=top_k,
+                top_n=top_k_new,
             )
-
-        #------------------------------------------##########################
-        # add date to metadata
-        doc = DatasetDocument.query.filter_by(dataset_id=dataset_id).first()
-        has_date = doc.doc_metadata.get("date") is not None
 
         if has_date:
             doc_ids = [d.metadata["doc_id"] for d in all_documents]
@@ -131,8 +137,23 @@ class RetrievalService:
             id_date_dict = {doc.id: doc.doc_metadata["date"] for doc in docs_dataset}
             for doc in all_documents:
                 doc.metadata["date"] = id_date_dict[doc.metadata["doc_id"]]
-        #------------------------------------------##########################
 
+            # adjust scores based on date
+            to_date = lambda x: datetime.fromisoformat(x)
+            min_date = min([to_date(doc.metadata["date"]) for doc in all_documents])
+            max_date = max([to_date(doc.metadata["date"]) for doc in all_documents])
+            daterange = max_date - min_date
+            daterange_days = daterange.days
+
+            # at best, score gets + 50% if it is the most recent document
+            # at worst, score gets nothing if it is the oldest document
+            away_from_maxdate = lambda x: (max_date - to_date(x)).days
+            for doc in all_documents:
+                doc.metadata["score"] += doc.metadata["score"] * 1.5 * (1 - away_from_maxdate(doc.metadata["date"]) / daterange_days)
+
+            # now pick the top_k_old documents
+            all_documents = sorted(all_documents, key=lambda x: x.metadata["score"], reverse=True)[:top_k_old]
+        #------------------------------------------##########################
 
         return all_documents
 
