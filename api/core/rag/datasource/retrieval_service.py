@@ -132,11 +132,11 @@ class RetrievalService:
             )
 
         if has_date:
-            doc_ids = [d.metadata["doc_id"] for d in all_documents]
+            doc_ids = list(set([d.metadata["document_id"] for d in all_documents])) # here, the value under the key "doc_id" is not actually for the parent document (maybe for the chunk only?)
             docs_dataset = DatasetDocument.query.filter(DatasetDocument.id.in_(doc_ids)).all()
             id_date_dict = {doc.id: doc.doc_metadata["date"] for doc in docs_dataset}
             for doc in all_documents:
-                doc.metadata["date"] = id_date_dict[doc.metadata["doc_id"]]
+                doc.metadata["date"] = id_date_dict[doc.metadata["document_id"]]
 
             # adjust scores based on date
             to_date = lambda x: datetime.fromisoformat(x)
