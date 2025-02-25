@@ -149,7 +149,9 @@ class RetrievalService:
             # at worst, score gets nothing if it is the oldest document
             away_from_maxdate = lambda x: (max_date - to_date(x)).days
             for doc in all_documents:
-                doc.metadata["score"] += doc.metadata["score"] * 1.5 * (1 - away_from_maxdate(doc.metadata["date"]) / daterange_days)
+                doc.metadata["score"] += doc.metadata["score"] * 0.5 * (1 - away_from_maxdate(doc.metadata["date"]) / daterange_days)
+                # so if the date range between the oldest and newest document in the top 100 documents is 100 days, and a given document
+                # is 50 days older than the newest document, then it gets an additional 0.5*0.5 = 25% times its original score
 
             # now pick the top_k_old documents
             all_documents = sorted(all_documents, key=lambda x: x.metadata["score"], reverse=True)[:top_k_old]
