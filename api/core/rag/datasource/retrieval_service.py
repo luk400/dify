@@ -50,7 +50,7 @@ class RetrievalService:
 
         #------------------------------------------##########################
         doc = DatasetDocument.query.filter_by(dataset_id=dataset_id).first()
-        has_date = doc.doc_metadata.get("date") is not None
+        has_date = doc is not None and doc.doc_metadata is not None and doc.doc_metadata.get("date") is not None
         if has_date:
             top_k_old = top_k
             top_k_new = 100 
