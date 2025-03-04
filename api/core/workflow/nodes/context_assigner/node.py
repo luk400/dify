@@ -57,6 +57,7 @@ class ContextAssignerNode(LLMNode):
     def _run(self) -> NodeRunResult:
 
         inputs = self.node_data.model_dump()
+        node_inputs = {}
         #inputs = self.node_data.dict()  # Changed from model_dump to dict()
         process_data: dict[str, Any] = {}
 
@@ -98,6 +99,8 @@ class ContextAssignerNode(LLMNode):
                         elif context is not None:
                             raise ValueError("Context already set")
 
+                    if context:
+                        node_inputs["#context#"] = context
                     
                     model_manager = ModelManager()
                     model_instance = model_manager.get_model_instance(
@@ -180,14 +183,16 @@ class ContextAssignerNode(LLMNode):
 
             return NodeRunResult(
                 status=WorkflowNodeExecutionStatus.SUCCEEDED,
-                inputs=inputs,
+                #inputs=inputs,
+                inputs=node_inputs,
                 process_data=process_data,
             )
 
         except (ValueError, VariableNotFoundError, ConversationIDNotFoundError) as e:
             return NodeRunResult(
                 status=WorkflowNodeExecutionStatus.FAILED,
-                inputs=inputs,
+                #inputs=inputs,
+                inputs=node_inputs,
                 process_data=process_data,
                 error=str(e),
             )
