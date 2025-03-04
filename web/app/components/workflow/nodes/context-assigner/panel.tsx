@@ -70,12 +70,9 @@ const Panel: FC<NodePanelProps<ConversationManagerNodeType>> = ({
             nodeId={id}
             readonly={readOnly}
             isShowNodeName
-            className='grow'
             value={inputs.conversation_variable}
             onChange={handleVarReferenceChange}
-            onlyLeafNodeVar={false}
-            filterVar={filterVar}
-            isSupportFileVar={false}
+            filterVar={filterContextVar}
           />
         </Field>
 
