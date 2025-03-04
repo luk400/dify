@@ -36,6 +36,7 @@ export enum BlockEnum {
   IterationStart = 'iteration-start',
   Assigner = 'assigner', // is now named as VariableAssigner
   ContextAssigner = 'context-assigner',
+  Agent = 'agent',
 }
 
 export enum ControlMode {

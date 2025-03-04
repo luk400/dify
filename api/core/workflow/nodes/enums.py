@@ -23,6 +23,7 @@ class NodeType(StrEnum):
     CONTEXT_ASSIGNER = "context-assigner"
     DOCUMENT_EXTRACTOR = "document-extractor"
     LIST_OPERATOR = "list-operator"
+    AGENT = "agent"
 
 
 class ErrorStrategy(StrEnum):

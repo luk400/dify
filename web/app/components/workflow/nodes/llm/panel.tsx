@@ -19,7 +19,6 @@ import type { Props as FormProps } from '@/app/components/workflow/nodes/_base/c
 import ResultPanel from '@/app/components/workflow/run/result-panel'
 import Tooltip from '@/app/components/base/tooltip'
 import Editor from '@/app/components/workflow/nodes/_base/components/prompt/editor'
-import { useRetryDetailShowInSingleRun } from '@/app/components/workflow/nodes/_base/components/retry/hooks'
 
 const i18nPrefix = 'workflow.nodes.llm'
 
@@ -71,10 +70,6 @@ const Panel: FC<NodePanelProps<LLMNodeType>> = ({
     runResult,
     filterJinjia2InputVar,
   } = useConfig(id, data)
-  const {
-    retryDetails,
-    handleRetryDetailsChange,
-  } = useRetryDetailShowInSingleRun()
 
   const model = inputs.model
   const hasConversationVar = inputs.conversation_variable && inputs.conversation_variable.length > 0
@@ -317,9 +312,7 @@ const Panel: FC<NodePanelProps<LLMNodeType>> = ({
           runningStatus={runningStatus}
           onRun={handleRun}
           onStop={handleStop}
-          retryDetails={retryDetails}
-          onRetryDetailBack={handleRetryDetailsChange}
-          result={<ResultPanel {...runResult} showSteps={false} onShowRetryDetail={handleRetryDetailsChange} />}
+          result={<ResultPanel {...runResult} showSteps={false} />}
         />
       )}
     </div>
