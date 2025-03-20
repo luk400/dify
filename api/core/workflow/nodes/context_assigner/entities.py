@@ -8,7 +8,7 @@ from ..llm.entities import ContextConfig
 class ContextAssignerNodeData(BaseNodeData):
     type: str = "context-assigner"
     context: ContextConfig = ContextConfig(enabled=False)
-    conversation_variable: list[str]
+    conversation_variables: list[list[str]]
     operation: Operation
     role: Optional[Role] = None  # Only needed for add operation
     how: Optional[AddHow] = None  # Only needed for add operation
