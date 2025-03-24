@@ -132,18 +132,41 @@ class RetrievalService:
 
             # adjust scores based on date
             to_date = lambda x: datetime.fromisoformat(x)
-            min_date = min([to_date(doc.metadata["date"]) for doc in all_documents])
-            max_date = max([to_date(doc.metadata["date"]) for doc in all_documents])
-            daterange = max_date - min_date
-            daterange_days = daterange.days
 
-            # at best, score gets + 50% if it is the most recent document
-            # at worst, score gets nothing if it is the oldest document
-            away_from_maxdate = lambda x: (max_date - to_date(x)).days
+            ############### method 1
+            ## at best, score gets + 50% if it is the most recent document
+            ## at worst, score gets nothing if it is the oldest document
+            #min_date = min([to_date(doc.metadata["date"]) for doc in all_documents])
+            #max_date = max([to_date(doc.metadata["date"]) for doc in all_documents])
+            #daterange = max_date - min_date
+            #daterange_days = daterange.days
+            #away_from_maxdate = lambda x: (max_date - to_date(x)).days
+            #for doc in all_documents:
+            #    doc.metadata["score"] += doc.metadata["score"] * 0.5 * (1 - away_from_maxdate(doc.metadata["date"]) / daterange_days)
+            #    # so if the date range between the oldest and newest document in the top 100 documents is 100 days, and a given document
+            #    # is 50 days older than the newest document, then it gets an additional 0.5*0.5 = 25% times its original score
+            ################
+
+            ############### method 2
+            # calculate relative to the current date
+            # if the document is less than a year old, it gets a bonus of 25% of its original score
+            # with each year older, the bonus decreases by 5% of the original score, so
+            #   < 1y: +25%
+            #   < 2y: +20%
+            #   < 3y: +15%
+            #   < 4y: +10%
+            #   < 5y: +5%
+            #   >= 5y: +0%
+            current_date = datetime.now()
+            max_bonus = 0.25
+            bonus_per_year = 0.05
             for doc in all_documents:
-                doc.metadata["score"] += doc.metadata["score"] * 0.5 * (1 - away_from_maxdate(doc.metadata["date"]) / daterange_days)
-                # so if the date range between the oldest and newest document in the top 100 documents is 100 days, and a given document
-                # is 50 days older than the newest document, then it gets an additional 0.5*0.5 = 25% times its original score
+                doc_date = to_date(doc.metadata["date"])
+                age_days = (current_date - doc_date).days
+                age = age_days / 365.25
+                doc.metadata["score"] += doc.metadata["score"] * max(0, max_bonus - bonus_per_year * age)
+            ################
+
 
             # now pick the top_k_old documents
             all_documents = sorted(all_documents, key=lambda x: x.metadata["score"], reverse=True)[:top_k_old]
