@@ -29,6 +29,8 @@ default_retrieval_model = {
     "score_threshold_enabled": False,
 }
 
+MAX_BONUS = 0.3
+BONUS_PER_YEAR = 0.05
 
 class RetrievalService:
     # Cache precompiled regular expressions to avoid repeated compilation
@@ -158,13 +160,11 @@ class RetrievalService:
             #   < 5y: +5%
             #   >= 5y: +0%
             current_date = datetime.now()
-            max_bonus = 0.25
-            bonus_per_year = 0.05
             for doc in all_documents:
                 doc_date = to_date(doc.metadata["date"])
                 age_days = (current_date - doc_date).days
                 age = age_days / 365.25
-                doc.metadata["score"] += doc.metadata["score"] * max(0, max_bonus - bonus_per_year * age)
+                doc.metadata["score"] += doc.metadata["score"] * max(0, MAX_BONUS - BONUS_PER_YEAR * age)
             ################
 
 

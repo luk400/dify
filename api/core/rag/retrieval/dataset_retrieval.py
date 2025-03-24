@@ -1,6 +1,7 @@
 import math
 import threading
 from collections import Counter
+from datetime import datetime
 from typing import Any, Optional, cast
 
 from flask import Flask, current_app
@@ -19,7 +20,7 @@ from core.ops.ops_trace_manager import TraceQueueManager, TraceTask
 from core.ops.utils import measure_time
 from core.rag.data_post_processor.data_post_processor import DataPostProcessor
 from core.rag.datasource.keyword.jieba.jieba_keyword_table_handler import JiebaKeywordTableHandler
-from core.rag.datasource.retrieval_service import RetrievalService
+from core.rag.datasource.retrieval_service import RetrievalService, MAX_BONUS, BONUS_PER_YEAR
 from core.rag.entities.context_entities import DocumentContext
 from core.rag.models.document import Document
 from core.rag.rerank.rerank_type import RerankMode
@@ -384,6 +385,20 @@ class DatasetRetrieval:
                     ].embedding_model_provider
                     weights["vector_setting"]["embedding_model_name"] = available_datasets[0].embedding_model
 
+        #------------------------------------------##########################
+        has_dates = []
+        for dataset in available_datasets:
+            dataset_id = dataset.id
+            doc = DatasetDocument.query.filter_by(dataset_id=dataset_id).first()
+            has_date = doc is not None and doc.doc_metadata is not None and doc.doc_metadata.get("date") is not None
+            has_dates.append(has_date)
+
+        if any(has_dates):
+            top_k_old = top_k
+            top_k_new = 100 
+        else:
+            top_k_old = top_k_new = top_k
+
         for dataset in available_datasets:
             index_type = dataset.indexing_technique
             retrieval_thread = threading.Thread(
@@ -392,7 +407,7 @@ class DatasetRetrieval:
                     "flask_app": current_app._get_current_object(),  # type: ignore
                     "dataset_id": dataset.id,
                     "query": query,
-                    "top_k": top_k,
+                    "top_k": top_k_new,
                     "all_documents": all_documents,
                 },
             )
@@ -407,13 +422,34 @@ class DatasetRetrieval:
                 data_post_processor = DataPostProcessor(tenant_id, reranking_mode, reranking_model, weights, False)
 
                 all_documents = data_post_processor.invoke(
-                    query=query, documents=all_documents, score_threshold=score_threshold, top_n=top_k
+                    query=query, documents=all_documents, score_threshold=score_threshold, top_n=top_k_new
                 )
             else:
                 if index_type == "economy":
-                    all_documents = self.calculate_keyword_score(query, all_documents, top_k)
+                    all_documents = self.calculate_keyword_score(query, all_documents, top_k_new)
                 elif index_type == "high_quality":
-                    all_documents = self.calculate_vector_score(all_documents, top_k, score_threshold)
+                    all_documents = self.calculate_vector_score(all_documents, top_k_new, score_threshold)
+
+
+        if any(has_dates):
+            doc_ids = list(set([d.metadata["document_id"] for d in all_documents])) # here, the value under the key "doc_id" is not actually for the parent document (maybe for the chunk only?)
+            docs_dataset = DatasetDocument.query.filter(DatasetDocument.id.in_(doc_ids)).all()
+            id_date_dict = {doc.id: doc.doc_metadata["date"] for doc in docs_dataset}
+            for doc in all_documents:
+                doc.metadata["date"] = id_date_dict[doc.metadata["document_id"]]
+
+            # adjust scores based on date
+            to_date = lambda x: datetime.fromisoformat(x)
+
+            current_date = datetime.now()
+            for doc in all_documents:
+                doc_date = to_date(doc.metadata["date"])
+                age_days = (current_date - doc_date).days
+                age = age_days / 365.25
+                doc.metadata["score"] += doc.metadata["score"] * max(0, MAX_BONUS - BONUS_PER_YEAR * age)
+
+            all_documents = sorted(all_documents, key=lambda x: x.metadata["score"], reverse=True)[:top_k_old]
+        #------------------------------------------##########################
 
         self._on_query(query, dataset_ids, app_id, user_from, user_id)
 
