@@ -434,15 +434,23 @@ class DatasetRetrieval:
         if any(has_dates):
             doc_ids = list(set([d.metadata["document_id"] for d in all_documents])) # here, the value under the key "doc_id" is not actually for the parent document (maybe for the chunk only?)
             docs_dataset = DatasetDocument.query.filter(DatasetDocument.id.in_(doc_ids)).all()
-            id_date_dict = {doc.id: doc.doc_metadata["date"] for doc in docs_dataset}
+            id_date_dict = {
+                doc.id: doc.doc_metadata["date"] for doc in docs_dataset
+                if doc.doc_metadata is not None
+                and "date" in doc.doc_metadata
+            }
             for doc in all_documents:
-                doc.metadata["date"] = id_date_dict[doc.metadata["document_id"]]
+                if doc.metadata["document_id"] in id_date_dict:
+                    doc.metadata["date"] = id_date_dict[doc.metadata["document_id"]]
 
             # adjust scores based on date
             to_date = lambda x: datetime.fromisoformat(x)
 
             current_date = datetime.now()
             for doc in all_documents:
+                if "date" not in doc.metadata:
+                    continue
+
                 doc_date = to_date(doc.metadata["date"])
                 age_days = (current_date - doc_date).days
                 age = age_days / 365.25
