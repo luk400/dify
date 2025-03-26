@@ -2,6 +2,10 @@ import { Fragment, useState } from 'react'
 import type { FC } from 'react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import remarkBreaks from 'remark-breaks'
+import rehypeRaw from 'rehype-raw'
 import Tooltip from './tooltip'
 import ProgressTooltip from './progress-tooltip'
 import type { Resources } from './index'
@@ -53,14 +57,14 @@ const Popup: FC<PopupProps> = ({
         </div>
       </PortalToFollowElemTrigger>
       <PortalToFollowElemContent style={{ zIndex: 1000 }}>
-        <div className='max-w-[360px] bg-gray-50 rounded-xl shadow-lg'>
+        <div className='max-w-[720px] bg-gray-50 rounded-xl shadow-lg'>
           <div className='px-4 pt-3 pb-2'>
             <div className='flex items-center h-[18px]'>
               <FileIcon type={fileType} className='shrink-0 mr-1 w-4 h-4' />
               <div className='text-xs font-medium text-gray-600 truncate'>{data.documentName}</div>
             </div>
           </div>
-          <div className='px-4 py-0.5 max-h-[450px] bg-white rounded-lg overflow-y-auto'>
+          <div className='px-4 py-0.5 max-h-[675px] bg-white rounded-lg overflow-y-auto'>
             <div className='w-full'>
               {
                 data.sources.map((source, index) => (
@@ -84,7 +88,15 @@ const Popup: FC<PopupProps> = ({
                           )
                         }
                       </div>
-                      <div className='text-[13px] text-gray-800 break-words'>{source.content}</div>
+                      {/* Replace plain text div with ReactMarkdown component */}
+                      <div className='text-[13px] text-gray-800 break-words prose prose-sm max-w-none'>
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm, remarkBreaks]}
+                          rehypePlugins={[rehypeRaw]}
+                        >
+                          {source.content}
+                        </ReactMarkdown>
+                      </div>
                       {
                         showHitInfo && (
                           <div className='flex items-center mt-2 text-xs font-medium text-gray-500 flex-wrap'>
