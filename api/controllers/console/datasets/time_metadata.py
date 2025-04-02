@@ -7,19 +7,18 @@ from controllers.console.wraps import account_initialization_required, setup_req
 from libs.login import login_required
 
 
-from controllers.service_api import api
+from controllers.console import api
 from extensions.ext_database import db
 from models.dataset import Dataset, Document
 from fields.document_fields import document_fields
 from datetime import datetime
 
-#class DocumentAddMetadataApi(DatasetApiResource):
 class DocumentAddMetadataApi(Resource):
     """Resource for adding metadata to documents."""
     
-    #@setup_required
-    #@login_required
-    #@account_initialization_required
+    @setup_required
+    @login_required
+    @account_initialization_required
     def post(self, dataset_id):
         """Add metadata to documents in dataset."""
         dataset_id = str(dataset_id)
@@ -78,7 +77,8 @@ class DocumentAddMetadataApi(Resource):
             documents = Document.query.filter_by(dataset_id=dataset_id).all()
             return {
                 "data": marshal(documents, document_fields),
-                "message": "Metadata updated successfully"
+                "message": "Metadata updated successfully",
+                "result": "success"
             }, 200
             
         except Exception as e:

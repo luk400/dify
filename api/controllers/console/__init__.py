@@ -82,6 +82,7 @@ from .datasets import (
     external,
     hit_testing,
     website,
+    time_metadata,
 )
 
 # Import explore controllers

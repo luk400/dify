@@ -26,9 +26,9 @@ import { useProviderContext } from '@/context/provider-context'
 import cn from '@/utils/classnames'
 import { useInvalidDocumentDetailKey } from '@/service/knowledge/use-document'
 import { useInvalid } from '@/service/use-base'
-import { addMetadata } from '@/service/datasets'
 import { useWorkspacesContext } from '@/context/workspace-context'
 import { useChildSegmentListKey, useSegmentListKey } from '@/service/knowledge/use-segment'
+import { addMetadata } from '@/service/datasets'
 
 const FolderPlusIcon = ({ className }: React.SVGProps<SVGElement>) => {
   return <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className={className ?? ''}>
@@ -302,23 +302,12 @@ const Documents: FC<IDocumentsProps> = ({ datasetId }) => {
                         const sharedToken = globalThis.location.pathname.split('/').slice(-1)[0]
                         const accessToken = localStorage.getItem('token') || JSON.stringify({ [sharedToken]: '' })
                         
-                        //now do the corresponding request for the above endpoint:
-                        const response = await fetch(`http://localhost:3000/v1/datasets/${datasetId}/document/add_metadata`, {
-                          method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${accessToken}`,
-                          },
-                          body: JSON.stringify({
-                            jsonContent,
-                          }),
-                        })
+                        const response = await addMetadata({ datasetId, body: { jsonContent } })
                         
-                        if (!response.ok) {
-                          const errorData = await response.json()
-                          throw new Error(errorData.message || 'Failed to update metadata')
+                        if (response.result !== 'success') {
+                          throw new Error('Received result: ' + response.result)
                         }
-                        
+ 
                         // display popup message saying that the metadata has been updated
                         alert('Dates added successfully')
                         

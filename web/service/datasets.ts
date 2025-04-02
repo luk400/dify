@@ -273,3 +273,7 @@ export const getErrorDocs: Fetcher<ErrorDocsResponse, { datasetId: string }> = (
 export const retryErrorDocs: Fetcher<CommonResponse, { datasetId: string; document_ids: string[] }> = ({ datasetId, document_ids }) => {
   return post<CommonResponse>(`/datasets/${datasetId}/retry`, { body: { document_ids } })
 }
+
+export const addMetadata: Fetcher<CommonResponse, { datasetId: string; body: { jsonContent: Record<string, any> } }> = ({ datasetId, body }) => {
+    return post<CommonResponse>(`/datasets/${datasetId}/document/add_metadata`, { body })
+}
